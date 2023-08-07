@@ -1,6 +1,6 @@
-from KeywordExtractor import KeywordList, KeywordExtractor
-from MorphemeAnalyzer import MorphemeAnalyzer
-from SimilarityComparator import SimilarityComparator
+from .KeywordExtractor import KeywordList, KeywordExtractor
+from .MorphemeAnalyzer import MorphemeAnalyzer
+from .SimilarityComparator import SimilarityComparator
 
 import re
 from typing import Union, Set
@@ -68,10 +68,14 @@ class TagExtractor:
     def _keyword_to_noun(self, keyword_list: KeywordList) -> dict:
         result_dict = dict()
         for keyword in keyword_list.get_keywords():
-            nouns = self.morpheme_analyzer.get_nouns(text=keyword)
-            score_per_noun = keyword.get_score() / len(nouns)
-            for noun in nouns:
-                result_dict[noun] += score_per_noun  # 작동 여부 확신 불가능 (파이썬 문법 숙련도 부족)
+            nouns = self.morpheme_analyzer.get_nouns(text=keyword.get_keyword())
+            if len(nouns) > 0:
+                score_per_noun = keyword.get_score() / len(nouns)
+                for noun in nouns:
+                    if noun in result_dict:
+                        result_dict[noun] += score_per_noun
+                    else:
+                        result_dict[noun] = score_per_noun
         return result_dict
 
     def _get_tags(self, noun_keyword_list: list[tuple[str, float]], max_n: int, similarity_point: float) -> list[str]:
@@ -83,8 +87,11 @@ class TagExtractor:
             for default_tag in self.tag_set:
                 similarity_point = self.similarity_comparator.get_similarity(word1=default_tag,
                                                                              word2=noun_keyword_list[index][0])
-                if max_similarity_point < similarity_point:
+                if (max_similarity_point < similarity_point) and (default_tag not in result_tag_list):
                     max_similarity_point = similarity_point
                     max_point_default_tag = default_tag
-            result_tag_list.append(max_point_default_tag)
+
+            if max_point_default_tag is not None:
+                result_tag_list.append(max_point_default_tag)
+            index += 1
         return result_tag_list

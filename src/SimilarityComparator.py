@@ -8,7 +8,7 @@ class SimilarityComparator:
         :param compare_model_vector: 유사도 비교에 사용할 모델의 벡터 (기본값 : fasttext/cc.ko.300.bin)
         """
         if compare_model_vector is None:
-            self.compare_model_vector = models.fasttext.load_facebook_vectors('../model/fasttext/cc.ko.300.bin')
+            self.compare_model_vector = models.fasttext.load_facebook_vectors('model/fasttext/cc.ko.300.bin')
         else:
             self.compare_model_vector = compare_model_vector
 
