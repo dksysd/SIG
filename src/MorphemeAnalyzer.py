@@ -3,7 +3,9 @@ import pandas as pd
 import numpy as np
 from functools import partial
 from tqdm.auto import tqdm as std_tqdm
-from typing import List, Dict, Tuple, Union
+from typing import List, Dict, Tuple, Union, Iterable, Optional
+
+import re
 
 
 class MorphemeAnalyzer:
@@ -62,6 +64,12 @@ class MorphemeAnalyzer:
                 self.add_user_word(word, tag)
             else:
                 self.add_user_word(word, tag, float(score))
+
+    def join(self, morphs: Iterable[Tuple[str, str]]) -> str:
+        return self._kiwi.join(morphs=morphs)
+
+    def tokenize(self, text: str) -> Union[List[Token], Iterable[List[Token]], List[List[Token]], Iterable[List[List[Token]]]]:
+        return self._kiwi.tokenize(text=text)
 
     def analyze(self, text: Union[List[str], str]) -> Union[List[Token], List[List[Token]]]:
         analyze_result = self._kiwi.analyze(text)
