@@ -8,9 +8,9 @@ from typing import Union, Set
 
 class TagExtractor:
     def __init__(self, tag_set: Set[str],
-                 keyword_extractor: type[KeywordExtractor] = KeywordExtractor(),
-                 morpheme_analyzer: type[MorphemeAnalyzer] = MorphemeAnalyzer(),
-                 similarity_comparator: type[SimilarityComparator] = SimilarityComparator()):
+                 keyword_extractor: KeywordExtractor = KeywordExtractor(),
+                 morpheme_analyzer: MorphemeAnalyzer = MorphemeAnalyzer(),
+                 similarity_comparator: SimilarityComparator = SimilarityComparator()):
         self.tag_set = tag_set
         self.keyword_extractor = keyword_extractor
         self.morpheme_analyzer = morpheme_analyzer
@@ -30,7 +30,7 @@ class TagExtractor:
         return result_text
 
     def get_tags(self, title: str, post_text: str, save_keyword: bool = False, top_n: int = 5, score_point: float = 0.5,
-                 similarity_point: float = 0.5) -> Union[list[list[tuple[str, float]], list[str]], list[str]]:
+                 similarity_point: float = 0.7) -> Union[list[list[tuple[str, float]], list[str]], list[str]]:
         # 전처리
         pretreatment_title = self.text_pretreatment(title)
         pretreatment_post_text = self.text_pretreatment(post_text)
@@ -101,10 +101,10 @@ class TagExtractor:
             max_similarity_point = similarity_point
             max_point_default_tag = None
             for default_tag in self.tag_set:
-                similarity_point = self.similarity_comparator.get_similarity(word1=default_tag,
-                                                                             word2=noun_keyword_list[index][0])
-                if (max_similarity_point < similarity_point) and (default_tag not in result_tag_list):
-                    max_similarity_point = similarity_point
+                similarity = self.similarity_comparator.get_similarity(word1=default_tag,
+                                                                       word2=noun_keyword_list[index][0])
+                if (max_similarity_point < similarity) and (default_tag not in result_tag_list):
+                    max_similarity_point = similarity
                     max_point_default_tag = default_tag
 
             if max_point_default_tag is not None:

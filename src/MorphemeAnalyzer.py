@@ -35,7 +35,7 @@ class MorphemeAnalyzer:
         """
         형태소 분석기에 사용자 정의 사전 여러개 추가
         :param word_list: 사용자 정의 사전 배열 (score는 생략될 수 있음)
-        (예시 : [('word':'사과', 'tag':'NNG','score':'0'), ('word':'바나나', 'tag':'NNG')])
+        (예시 : [{'word':'사과', 'tag':'NNG','score':'0'}, {'word':'바나나', 'tag':'NNG'}])
         """
         for inner in word_list:
             word = inner.get('word')
