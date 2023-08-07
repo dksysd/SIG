@@ -1,6 +1,7 @@
+from typing import List, Optional
+
 from keybert import KeyBERT
 from transformers import BertModel
-from typing import List, Dict, Union, Optional
 
 
 class KeywordList:
