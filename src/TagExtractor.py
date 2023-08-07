@@ -1,0 +1,90 @@
+from KeywordExtractor import KeywordList, KeywordExtractor
+from MorphemeAnalyzer import MorphemeAnalyzer
+from SimilarityComparator import SimilarityComparator
+
+import re
+from typing import Union, Set, List
+
+
+class TagList:
+    def __init__(self, keyword_list: KeywordList = KeywordList(),
+                 tag_set: Set[str] = set):
+        self._keyword_list = keyword_list
+        self._tag_set = tag_set
+
+    def add_keyword(self, keyword: KeywordList.Keyword):
+        self._keyword_list.add_keyword(keyword=keyword.get_keyword(), score=keyword.get_score())
+
+    def add_keywords(self, keyword_list: KeywordList):
+        for keyword_list_inner in keyword_list.get_keywords():
+            self._keyword_list.add_keyword(keyword=keyword_list_inner.get('keyword'),
+                                           score=keyword_list_inner.get('score'))
+
+
+class TagExtractor:
+    def __init__(self, tag_set: Set[str],
+                 keyword_extractor: type[KeywordExtractor] = KeywordExtractor(),
+                 morpheme_analyzer: type[MorphemeAnalyzer] = MorphemeAnalyzer(),
+                 similarity_comparator: type[SimilarityComparator] = SimilarityComparator()):
+        self.tag_set = tag_set
+        self.keyword_extractor = keyword_extractor
+        self.morpheme_analyzer = morpheme_analyzer
+        self.similarity_comparator = similarity_comparator
+        self.phone_number_regex = re.compile(
+            '[0-9|공|영|일|이|삼|사|오|육|륙|칠|팔|구|하나|둘|셋|넷|다섯|여섯|일곱|여덣|아홉]{3}-?[0-9|공|영|일|이|삼|사|오|육|륙|칠|팔|구|하나|둘|셋|넷|다섯|여섯|일곱|여덣|아홉]{4}-?[0-9|공|영|일|이|삼|사|오|육|륙|칠|팔|구|하나|둘|셋|넷|다섯|여섯|일곱|여덣|아홉]{4}')
+
+    def text_pretreatment(self, text: str) -> str:
+        result_text = ''
+        # 한국어 혼용 휴대전화 번호 제거
+        text = self.phone_number_regex.sub('', text)
+        # 이름, 날짜 제거
+        # 인터넷 용어 제거
+        for token in self.morpheme_analyzer.analyze(text=text):
+            if not token.tag.startswith('W'):
+                result_text += token.form
+        return result_text
+
+    def get_tags(self, title: str, post_text: str, save_keyword: bool, top_n: int = 5, similarity_point: float = 0.5):
+        # 전처리
+        pretreatment_title = self.text_pretreatment(title)
+        pretreatment_post_text = self.text_pretreatment(post_text)
+
+        # 문장 추출
+        pretreatment_post_text_sentence_list = self.morpheme_analyzer.get_sentences(text=pretreatment_post_text)
+        pretreatment_post_text = ' '.join(pretreatment_post_text_sentence_list)
+
+        # 키워드 추출
+        title_KeywordList = self.keyword_extractor.get_keywords(text=pretreatment_title)
+        post_text_KeywordList = self.keyword_extractor.get_keywords(text=pretreatment_post_text)
+
+        # 키워드 단어 명사화 및 동일 명사 가중치 합 연산
+        title_noun_keyword_dict = self._keyword_to_noun(keyword_list=title_KeywordList)
+        post_text_noun_keyword_dict = self._keyword_to_noun(keyword_list=post_text_KeywordList)
+
+        # 가중치를 기준으로 정렬
+        title_noun_keyword_list = sorted(title_noun_keyword_dict.items(), key=lambda item: item[1], reverse=True)
+        post_text_noun_keyword_list = sorted(post_text_noun_keyword_dict.items(), key=lambda item: item[1],
+                                             reverse=True)
+        # 반환
+        # todo 유사도 비교를 통해 상위 n개만 추출 하도록 구현
+        title_max_n = int(top_n / 2)
+        title_index = 0
+        while title_index < title_max_n and title_index < len(title_noun_keyword_list):
+            max_point = similarity_point
+            max_point_fault_tag = None
+            for default_tag in self.tag_set:
+                similarity = self.similarity_comparator.get_similarity(default_tag, title_noun_keyword_list[title_index])
+                if max_point < similarity:
+
+
+        if save_keyword:
+            return []
+
+    def _keyword_to_noun(self, keyword_list: KeywordList) -> dict:
+        result_dict = dict()
+        for keyword in keyword_list.get_keywords():
+            nouns = self.morpheme_analyzer.get_nouns(keyword)
+            score_per_noun = keyword.get_score() / len(nouns)
+            for noun in nouns:
+                result_dict[noun] += score_per_noun  # 작동 여부 확신 불가능 (파이썬 문법 숙련도 부족)
+        return result_dict
