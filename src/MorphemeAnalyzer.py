@@ -1,11 +1,10 @@
-from kiwipiepy import Kiwi, Token
-import pandas as pd
-import numpy as np
 from functools import partial
-from tqdm.auto import tqdm as std_tqdm
-from typing import List, Dict, Tuple, Union, Iterable, Optional
+from typing import List, Dict, Tuple, Union, Iterable
 
-import re
+import numpy as np
+import pandas as pd
+from kiwipiepy import Kiwi, Token
+from tqdm.auto import tqdm as std_tqdm
 
 
 class MorphemeAnalyzer:

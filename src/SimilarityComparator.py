@@ -1,9 +1,8 @@
 from gensim import models
-from typing import Optional
 
 
 class SimilarityComparator:
-    def __init__(self, compare_model_vector: Optional[type(models)] = None):
+    def __init__(self, compare_model_vector: type(models) = None):
         """
         :param compare_model_vector: 유사도 비교에 사용할 모델의 벡터 (기본값 : fasttext/cc.ko.300.bin)
         """
