@@ -9,20 +9,43 @@ from src.TagExtractor import TagExtractor
 class DatabaseController:
     """
     <데이터베이스 설계>
-    테이블 명 : tag
-    도메인 목록 : [ID (UNSIGNED INT(10)) {PK}, NAME (VARCHAR(10))]
+    CREATE TABLE tag
+    (
+        id   INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        name VARBINARY(20) NOT NULL
+    );
 
-    테이블 명 : tag_post
-    도메인 목록 : [TAG_ID (UNSIGNED INT(10)) {FK}, POST_ID (UNSIGNED INT(10)) {FK}]
+    CREATE TABLE post
+    (
+        id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        title       VARCHAR(255) NOT NULL,
+        content     TEXT,
+        author      VARCHAR(100) NOT NULL,
+        upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
 
-    테이블 명 : post
-    도메인 목록 : [ID (UNSIGNED INT(10)) {PK}, TITLE (TEXT), CONTENT (TEXT), AUTHOR (VARCHAR(10)), UPLOAD_DATE (TIMESTAMP)]
+    CREATE TABLE keyword
+    (
+        id   INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(20) NOT NULL
+    );
 
-    테이블 명 : keyword_post
-    도메인 목록 : [POST_ID (UNSIGNED INT(10)) {FK}, KEYWORD_ID (UNSIGNED INT(10)) {FK}, VALUE (INT(3))]
+    CREATE TABLE tag_post
+    (
+        tag_id  INT UNSIGNED,
+        post_id INT UNSIGNED,
+        FOREIGN KEY (tag_id) REFERENCES tag (id),
+        FOREIGN KEY (post_id) REFERENCES post (id)
+    );
 
-    테이블 명 : keyword
-    도메인 목록 : [ID (UNSIGNED INT(10)) {PK}, NAME (VARCHAR(10))]
+    CREATE TABLE keyword_post
+    (
+        post_id    INT UNSIGNED,
+        keyword_id INT UNSIGNED,
+        value      FLOAT,
+        FOREIGN KEY (post_id) REFERENCES post (id),
+        FOREIGN KEY (keyword_id) REFERENCES keyword (id)
+    );
     """
 
     def __init__(self, user: str, password: str, host: str, db: str):
@@ -41,7 +64,7 @@ class DatabaseController:
         cursor = connection.cursor()
         cursor.execute(query=sql, args=args)
         result_list = cursor.fetchall()
-        connection.commit()  # 그냥 해도 되나 몰겠다
+        connection.commit()
         connection.close()
         return result_list
 
@@ -50,7 +73,7 @@ class DatabaseController:
         :return: 데이터베이스에 기록되어 있는 기본 태그들
         """
         tag_set = set()
-        for result in self._execute(sql='SELECT tag."KEYWORD" FROM "tag"'):
+        for result in self._execute(sql='SELECT tag."name" FROM "tag"'):
             tag = result[0]
             tag_set.add(tag)
         return tag_set
@@ -62,10 +85,10 @@ class DatabaseController:
         :return: 정보 (제목, 작성자, 게시글)
         """
         result_list = self._execute(
-            sql='SELECT post."TITLE", post."CONTENT", post."AUTHOR" FROM "post" WHERE post."ID" = (?)', args=post_id)
-        title = result_list[0][0]
-        post_text = result_list[0][1]
-        author = result_list[0][2]
+            sql='SELECT post."title", post."content", post."author" FROM "post" WHERE post."id" = (%d)', args=post_id)
+        title = self._none_check(text=result_list[0][0])
+        post_text = self._none_check(text=result_list[0][1])
+        author = self._none_check(text=result_list[0][2])
         return title, post_text, author
 
     def save_keywords(self, post_id: int, keyword_list: list[str, float]):
@@ -83,13 +106,13 @@ class DatabaseController:
         :param keyword: 키워드
         :param value: 키워드 가중치
         """
-        keyword_id = self._execute(sql='SELECT keyword."ID" FROM keyword WHERE keyword."NAME" = (?)', args=keyword)[0][
+        keyword_id = self._execute(sql='SELECT keyword."id" FROM keyword WHERE keyword."name" = (%s)', args=keyword)[0][
             0]
         if keyword_id:
-            self._execute(sql='INSERT INTO keyword_post (KEYWORD_ID, KEYWORD_VALUE, POST_ID) VALUES (?, ?, ?)',
+            self._execute(sql='INSERT INTO keyword_post (keyword_id, value, post_id) VALUES (%d, %f, %d)',
                           args=(keyword_id, value, post_id))
         else:
-            self._execute(sql='INSERT INTO keyword (NAME) VALUES (?)', args=keyword)
+            self._execute(sql='INSERT INTO keyword (name) VALUES (%s)', args=keyword)
             self.save_keyword(post_id=post_id, keyword=keyword, value=value)
 
     def save_tags(self, post_id: int, tag_list: list[str]):
@@ -107,8 +130,14 @@ class DatabaseController:
         :param post_id: 해당하는 게시글 번호
         :return:
         """
-        tag_id = self._execute(sql='SELECT tag."ID" FROM tag WHERE tag."NAME" = (?)', args=tag)
-        self._execute(sql='INSERT INTO tag_post (TAG_ID, POST_ID) VALUES (?, ?)', args=(tag_id, post_id))
+        tag_id = self._execute(sql='SELECT tag."id" FROM tag WHERE tag."name" = (%d)', args=tag)
+        self._execute(sql='INSERT INTO tag_post (tag_id, post_id) VALUES (%d, %d)', args=(tag_id, post_id))
+
+    def _none_check(self, text: str) -> str:
+        """
+        text가 None일 경우 공백 문자열 반환
+        """
+        return '' if text is None else text
 
 
 class SETagExtractor:
