@@ -10,19 +10,19 @@ class DatabaseController:
     """
     <데이터베이스 설계>
     테이블 명 : tag
-    도메인 목록 : [ID, NAME]
+    도메인 목록 : [ID (UNSIGNED INT(10)) {PK}, NAME (VARCHAR(10))]
 
     테이블 명 : tag_post
-    도메인 목록 : [TAG_ID, POST_ID]
+    도메인 목록 : [TAG_ID (UNSIGNED INT(10)) {FK}, POST_ID (UNSIGNED INT(10)) {FK}]
 
     테이블 명 : post
-    도메인 목록 : [ID, TITLE, CONTENT, AUTHOR]
+    도메인 목록 : [ID (UNSIGNED INT(10)) {PK}, TITLE (TEXT), CONTENT (TEXT), AUTHOR (VARCHAR(10)), UPLOAD_DATE (TIMESTAMP)]
 
     테이블 명 : keyword_post
-    도메인 목록 : [POST_ID, KEYWORD_ID, VALUE]
+    도메인 목록 : [POST_ID (UNSIGNED INT(10)) {FK}, KEYWORD_ID (UNSIGNED INT(10)) {FK}, VALUE (INT(3))]
 
     테이블 명 : keyword
-    도메인 목록 : [ID, NAME]
+    도메인 목록 : [ID (UNSIGNED INT(10)) {PK}, NAME (VARCHAR(10))]
     """
 
     def __init__(self, user: str, password: str, host: str, db: str):
