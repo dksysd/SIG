@@ -21,7 +21,7 @@ class MorphemeAnalyzer:
         self._tqdm = partial(std_tqdm, unit_scale=unit_scale, dynamic_ncols=dynamic_ncols)
         self.add_user_word(word='안녕하세요', tag='VA', score=1)
 
-    def add_user_word(self, word: str, tag: str, score: float = 0.) -> None:
+    def add_user_word(self, word: str, tag: str = 'NNP', score: float = 0.) -> None:
         """
         형태소 분석기에 사용자 정의 사전 추가
         :param word: 추가할 단어
@@ -46,39 +46,22 @@ class MorphemeAnalyzer:
             else:
                 self.add_user_word(word, tag, float(score))
 
-    def add_user_dict_from_file(self, path: str) -> None:
-        # Todo 추후 db로 변경
-        """
-        csv 파일에서 사용자 정의 사전 추가. csv 파일에 첫번째 줄은 "word, tag, score" 로 고정함
-        :param path: csv 파일 경로
-        """
-        data_frame = pd.read_csv(path).replace(to_replace=np.nan, value=None)
-        for index in self._tqdm(iterable=range(len(data_frame)), desc='learning'):
-            row = data_frame.loc[index]
-            word = row.get('word')
-            tag = row.get('tag')
-            score = row.get('score')
-
-            if score is None:
-                self.add_user_word(word, tag)
-            else:
-                self.add_user_word(word, tag, float(score))
-
     def join(self, morphs: Iterable[Tuple[str, str]]) -> str:
+        """
+        형태소 분석 결과 복원
+        :param morphs: 형태소 분석 결과
+        :return: 복원 결과
+        """
         return self._kiwi.join(morphs=morphs)
 
-    def tokenize(self, text: str) -> Union[List[Token], Iterable[List[Token]], List[List[Token]], Iterable[List[List[Token]]]]:
+    def tokenize(self, text: str) -> Union[
+        List[Token], Iterable[List[Token]], List[List[Token]], Iterable[List[List[Token]]]]:
+        """
+        문장 토큰화
+        :param text: 분석할 문장
+        :return: 분석 결과
+        """
         return self._kiwi.tokenize(text=text)
-
-    def analyze(self, text: Union[List[str], str]) -> Union[List[Token], List[List[Token]]]:
-        analyze_result = self._kiwi.analyze(text)
-        if text is list:
-            result = []
-            for inner in analyze_result:
-                result.append(inner[0])
-            return result
-        else:
-            return analyze_result[0][0]
 
     def get_nouns(self, text: str) -> List[str]:
         """
@@ -95,7 +78,9 @@ class MorphemeAnalyzer:
 
     def get_sentences(self, text: str) -> List[str]:
         """
-        문장으로 분리한 결과를 반환
+        뮨장 추출
+        :param text: 분석할 글
+        :return: 추출된 문장
         """
         result_sentences: List[str] = []
         for sentence in self._kiwi.split_into_sents(text=text, return_tokens=True):

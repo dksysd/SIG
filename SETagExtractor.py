@@ -114,8 +114,11 @@ class DatabaseController:
 class SETagExtractor:
     def __init__(self, user: str, password: str, host: str, db: str):
         self.database_controller = DatabaseController(user=user, password=password, host=host, db=db)
-        self.tag_extractor = TagExtractor(tag_set=self.database_controller.get_tag_set(),
-                                          morpheme_analyzer=MorphemeAnalyzer(is_typos=True))
+        tag_set = self.database_controller.get_tag_set()
+        morpheme_analyzer = MorphemeAnalyzer()
+        for tag in tag_set:
+            morpheme_analyzer.add_user_word(word=tag)
+        self.tag_extractor = TagExtractor(tag_set=tag_set, morpheme_analyzer=MorphemeAnalyzer(is_typos=True))
 
     def get_tags(self, post_id: int) -> list[str]:
         """
@@ -128,11 +131,3 @@ class SETagExtractor:
         self.database_controller.save_keywords(post_id=post_id, keyword_list=keyword_list)
         self.database_controller.save_tags(post_id=post_id, tag_list=tag_list)
         return tag_list
-
-    def set_default_tags(self, user: str, password: str, host: str, db: str):
-        """
-        기본 태그 목록 재설정
-        """
-        database_controller = DatabaseController(user=user, password=password, host=host, db=db)
-        self.tag_extractor = TagExtractor(tag_set=database_controller.get_tag_set(),
-                                          morpheme_analyzer=MorphemeAnalyzer(is_typos=True))
