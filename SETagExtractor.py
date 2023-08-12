@@ -12,7 +12,7 @@ class DatabaseController:
     CREATE TABLE tag
     (
         id   INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        name VARBINARY(20) NOT NULL
+        name VARCHAR(20) NOT NULL
     );
 
     CREATE TABLE post
@@ -35,7 +35,8 @@ class DatabaseController:
         tag_id  INT UNSIGNED,
         post_id INT UNSIGNED,
         FOREIGN KEY (tag_id) REFERENCES tag (id),
-        FOREIGN KEY (post_id) REFERENCES post (id)
+        FOREIGN KEY (post_id) REFERENCES post (id),
+        PRIMARY KEY (tag_id, post_id)
     );
 
     CREATE TABLE keyword_post
@@ -44,7 +45,8 @@ class DatabaseController:
         keyword_id INT UNSIGNED,
         value      FLOAT,
         FOREIGN KEY (post_id) REFERENCES post (id),
-        FOREIGN KEY (keyword_id) REFERENCES keyword (id)
+        FOREIGN KEY (keyword_id) REFERENCES keyword (id),
+        PRIMARY KEY (post_id, keyword_id, value)
     );
     """
 
