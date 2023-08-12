@@ -107,10 +107,10 @@ class DatabaseController:
             if type(keyword_id) is list:
                 keyword_id = keyword_id[0][0]
 
-            self._execute(sql='INSERT INTO keyword_post (keyword_id, value, post_id) VALUES (%s, %s, %s)',
+            self._execute(sql='INSERT IGNORE INTO keyword_post (keyword_id, value, post_id) VALUES (%s, %s, %s)',
                           args=(keyword_id, value, post_id))
         else:
-            self._execute(sql='INSERT INTO keyword (name) VALUES (%s)', args=[keyword])
+            self._execute(sql='INSERT IGNORE INTO keyword (name) VALUES (%s)', args=[keyword])
             self.save_keyword(post_id=post_id, keyword=keyword, value=value)
 
     def save_tags(self, post_id: int, tag_list: list[str]):
@@ -129,7 +129,7 @@ class DatabaseController:
         :return:
         """
         tag_id = self._execute(sql='SELECT id FROM tag WHERE name = (%s)', args=[tag])[0][0]
-        self._execute(sql='INSERT INTO tag_post (tag_id, post_id) VALUES (%s, %s)', args=(tag_id, post_id))
+        self._execute(sql='INSERT IGNORE INTO tag_post (tag_id, post_id) VALUES (%s, %s)', args=(tag_id, post_id))
 
     def _none_check(self, text: str) -> str:
         """

@@ -4,7 +4,6 @@ from typing import List, Dict, Tuple, Union, Iterable
 import numpy as np
 import pandas as pd
 from kiwipiepy import Kiwi, Token
-from tqdm.auto import tqdm as std_tqdm
 
 
 class MorphemeAnalyzer:
@@ -18,7 +17,6 @@ class MorphemeAnalyzer:
         """
         typos = 'basic' if is_typos else None
         self._kiwi = Kiwi(typos=typos, num_workers=num_workers)
-        self._tqdm = partial(std_tqdm, unit_scale=unit_scale, dynamic_ncols=dynamic_ncols)
         self.add_user_word(word='안녕하세요', tag='VA', score=1)
 
     def add_user_word(self, word: str, tag: str = 'NNP', score: float = 0.) -> None:
