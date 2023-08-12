@@ -1,6 +1,6 @@
-from typing import Any
+from typing import Any, Union
 
-import pymysql
+from mysql.connector import pooling
 
 from src.MorphemeAnalyzer import MorphemeAnalyzer
 from src.TagExtractor import TagExtractor
@@ -49,22 +49,18 @@ class DatabaseController:
     """
 
     def __init__(self, user: str, password: str, host: str, db: str):
-        self.user = user
-        self.password = password
-        self.host = host
-        self.db = db
+        self.connection_pool = pooling.MySQLConnectionPool(pool_reset_session=True, user=user, password=password,
+                                                           host=host, database=db, autocommit=True)
 
-    def _execute(self, sql: str, args=None) -> tuple[tuple[Any, ...], ...]:
+    def _execute(self, sql: str, args: Union[tuple, list] = None) -> Any:
         """
         SQL 쿼리 실행
         :return: 결과값
         """
-        connection = pymysql.connect(user=self.user, password=self.password, host=self.host, db=self.db,
-                                     charset='utf8')
+        connection = self.connection_pool.get_connection()
         cursor = connection.cursor()
-        cursor.execute(query=sql, args=args)
+        cursor.execute(operation=sql, params=args)
         result_list = cursor.fetchall()
-        connection.commit()
         connection.close()
         return result_list
 
@@ -73,7 +69,7 @@ class DatabaseController:
         :return: 데이터베이스에 기록되어 있는 기본 태그들
         """
         tag_set = set()
-        for result in self._execute(sql='SELECT tag."name" FROM "tag"'):
+        for result in self._execute(sql='SELECT name FROM tag'):
             tag = result[0]
             tag_set.add(tag)
         return tag_set
@@ -85,7 +81,7 @@ class DatabaseController:
         :return: 정보 (제목, 작성자, 게시글)
         """
         result_list = self._execute(
-            sql='SELECT post."title", post."content", post."author" FROM "post" WHERE post."id" = (%d)', args=post_id)
+            sql='SELECT title, content, author FROM post WHERE id = (%s)', args=[post_id])
         title = self._none_check(text=result_list[0][0])
         post_text = self._none_check(text=result_list[0][1])
         author = self._none_check(text=result_list[0][2])
@@ -106,13 +102,15 @@ class DatabaseController:
         :param keyword: 키워드
         :param value: 키워드 가중치
         """
-        keyword_id = self._execute(sql='SELECT keyword."id" FROM keyword WHERE keyword."name" = (%s)', args=keyword)[0][
-            0]
+        keyword_id = self._execute(sql='SELECT id FROM keyword WHERE name = (%s)', args=[keyword])
         if keyword_id:
-            self._execute(sql='INSERT INTO keyword_post (keyword_id, value, post_id) VALUES (%d, %f, %d)',
+            if type(keyword_id) is list:
+                keyword_id = keyword_id[0][0]
+
+            self._execute(sql='INSERT INTO keyword_post (keyword_id, value, post_id) VALUES (%s, %s, %s)',
                           args=(keyword_id, value, post_id))
         else:
-            self._execute(sql='INSERT INTO keyword (name) VALUES (%s)', args=keyword)
+            self._execute(sql='INSERT INTO keyword (name) VALUES (%s)', args=[keyword])
             self.save_keyword(post_id=post_id, keyword=keyword, value=value)
 
     def save_tags(self, post_id: int, tag_list: list[str]):
@@ -130,8 +128,8 @@ class DatabaseController:
         :param post_id: 해당하는 게시글 번호
         :return:
         """
-        tag_id = self._execute(sql='SELECT tag."id" FROM tag WHERE tag."name" = (%d)', args=tag)
-        self._execute(sql='INSERT INTO tag_post (tag_id, post_id) VALUES (%d, %d)', args=(tag_id, post_id))
+        tag_id = self._execute(sql='SELECT id FROM tag WHERE name = (%s)', args=[tag])[0][0]
+        self._execute(sql='INSERT INTO tag_post (tag_id, post_id) VALUES (%s, %s)', args=(tag_id, post_id))
 
     def _none_check(self, text: str) -> str:
         """
