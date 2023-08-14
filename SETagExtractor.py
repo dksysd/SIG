@@ -48,6 +48,24 @@ class DatabaseController:
         FOREIGN KEY (keyword_id) REFERENCES keyword (id),
         PRIMARY KEY (post_id, keyword_id, value)
     );
+
+    CREATE TABLE answer_tag_post
+    (
+        tag_id  INT UNSIGNED,
+        post_id INT UNSIGNED,
+        FOREIGN KEY (tag_id) REFERENCES tag (id),
+        FOREIGN KEY (post_id) REFERENCES post (id),
+        PRIMARY KEY (tag_id, post_id)
+    );
+
+    CREATE TABLE queue
+    (
+        id      INT UNSIGNED AUTO_INCREMENT,
+        post_id INT UNSIGNED,
+        FOREIGN KEY (post_id) REFERENCES post (id),
+        PRIMARY KEY (id, post_id)
+    );
+
     """
 
     def __init__(self, user: str, password: str, host: str, db: str):
