@@ -1,4 +1,4 @@
-from Pororo import Pororo
+from pororo import Pororo
 
 
 class NamedEntityRecognizer:

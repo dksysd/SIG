@@ -1,9 +1,9 @@
 import re
 
-from KeywordExtractor import KeywordList, KeywordExtractor
-from MorphemeAnalyzer import MorphemeAnalyzer
-from SimilarityComparator import SimilarityComparator
-from NamedEntityRecognizer import NamedEntityRecognizer
+from .KeywordExtractor import KeywordList, KeywordExtractor
+from .MorphemeAnalyzer import MorphemeAnalyzer
+from .SimilarityComparator import SimilarityComparator
+from .NamedEntityRecognizer import NamedEntityRecognizer
 
 
 class TagExtractor:
