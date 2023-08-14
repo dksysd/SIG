@@ -144,10 +144,11 @@ class SETagExtractor:
     def __init__(self, user: str, password: str, host: str, db: str):
         self.database_controller = DatabaseController(user=user, password=password, host=host, db=db)
         tag_set = self.database_controller.get_tag_set()
-        morpheme_analyzer = MorphemeAnalyzer()
+        morpheme_analyzer = MorphemeAnalyzer(is_typos=True)
         for tag in tag_set:
             morpheme_analyzer.add_user_word(word=tag)
-        self.tag_extractor = TagExtractor(tag_set=tag_set, morpheme_analyzer=MorphemeAnalyzer(is_typos=True))
+        self.tag_extractor = TagExtractor(tag_set=tag_set, morpheme_analyzer=morpheme_analyzer)
+        self.similarity_point = 0.7
 
     def get_tags(self, post_id: int) -> list[str]:
         """
@@ -156,7 +157,26 @@ class SETagExtractor:
         :return: 게시글에 달린 태그
         """
         title, post_text, author = self.database_controller.get_data(post_id=post_id)
-        tag_list, keyword_list = self.tag_extractor.get_tags(title=title, post_text=post_text, return_keyword=True)
+        tag_list, keyword_list = self.tag_extractor.get_tags(title=title, post_text=post_text, return_keyword=True,
+                                                             similarity_point=self.similarity_point)
         self.database_controller.save_keywords(post_id=post_id, keyword_list=keyword_list)
         self.database_controller.save_tags(post_id=post_id, tag_list=tag_list)
         return tag_list
+
+    def add_tag(self, tag: str):
+        self.database_controller._execute(sql='INSERT INTO tag(name) VALUE (%s)', args=[tag])
+        keyword_dict = dict()
+        for inner in self.database_controller._execute(
+                sql='SELECT keyword_post.post_id, keyword.name FROM (keyword_post left join keyword on keyword_post.keyword_id = keyword.id)'):
+            post_id, keyword = inner
+            if keyword_dict.get(post_id) is None:
+                keyword_dict[post_id] = [keyword]
+            else:
+                keyword_dict.get(post_id).append(keyword)
+
+        for post_id in keyword_dict.keys():
+            if self.tag_extractor.similarity_comparator.is_similar(tag, keyword_dict.get(post_id),
+                                                                   point=self.similarity_point):
+                self.database_controller.save_tag(post_id=post_id, tag=tag)
+
+        self.tag_extractor._get_tags()

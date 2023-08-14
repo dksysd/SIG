@@ -44,7 +44,7 @@ class MorphemeAnalyzer:
             else:
                 self.add_user_word(word, tag, float(score))
 
-    def join(self, morphs: Iterable[Tuple[str, str]]) -> str:
+    def join(self, morphs: Iterable[Union[Token, Tuple[str, str], Tuple[str, str, bool]]]) -> str:
         """
         형태소 분석 결과 복원
         :param morphs: 형태소 분석 결과

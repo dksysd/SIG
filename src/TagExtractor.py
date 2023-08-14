@@ -1,21 +1,24 @@
 import re
 
-from .KeywordExtractor import KeywordList, KeywordExtractor
-from .MorphemeAnalyzer import MorphemeAnalyzer
-from .SimilarityComparator import SimilarityComparator
+from KeywordExtractor import KeywordList, KeywordExtractor
+from MorphemeAnalyzer import MorphemeAnalyzer
+from SimilarityComparator import SimilarityComparator
+from NamedEntityRecognizer import NamedEntityRecognizer
 
 
 class TagExtractor:
-    def __init__(self, tag_set: set[str],
+    def __init__(self, tag_set: set[str], named_entity_recognizer: NamedEntityRecognizer = NamedEntityRecognizer(),
                  keyword_extractor: KeywordExtractor = KeywordExtractor(),
                  morpheme_analyzer: MorphemeAnalyzer = MorphemeAnalyzer(),
                  similarity_comparator: SimilarityComparator = SimilarityComparator()):
         self.tag_set = tag_set
+        self.named_entity_recognizer = named_entity_recognizer
         self.keyword_extractor = keyword_extractor
         self.morpheme_analyzer = morpheme_analyzer
         self.similarity_comparator = similarity_comparator
         self.phone_number_regex = re.compile(
             '[0-9|공|영|일|이|삼|사|오|육|륙|칠|팔|구|하나|둘|셋|넷|다섯|여섯|일곱|여덣|아홉]{3}-?[0-9|공|영|일|이|삼|사|오|육|륙|칠|팔|구|하나|둘|셋|넷|다섯|여섯|일곱|여덣|아홉]{4}-?[0-9|공|영|일|이|삼|사|오|육|륙|칠|팔|구|하나|둘|셋|넷|다섯|여섯|일곱|여덣|아홉]{4}')
+        self.ner_excluded_tag_set = {'DATE', 'TIME', 'PHONE_NUMBER', 'PERSON', 'QUANTITY', 'LOCATION', 'ORGANIZATION'}
 
     def set_tag_set(self, tag_set: set[str]):
         """
@@ -31,12 +34,18 @@ class TagExtractor:
         :param text: 전처리할 대상
         :return:전처리 결과
         """
+        # 불필요 공백 제거
+        text = text.replace('  ', '')
         # 한국어 혼용 휴대전화 번호 제거
         text = self.phone_number_regex.sub('', text)
-        # 이름, 날짜 제거
+        # 이름, 날짜, 수량 표현 제거
+        ner_text_list = [text for text, tag in self.named_entity_recognizer.analyze(text=text) if
+                         tag not in self.ner_excluded_tag_set]
+        text = ''.join(ner_text_list)
         # 인터넷 용어 제거
-        text = self.morpheme_analyzer.join(token for token in self.morpheme_analyzer.tokenize(text=text) if
-                                           not token.tag.startswith('W') and not token.tag == 'SW')
+        remove_sw_text_list = [token for token in self.morpheme_analyzer.tokenize(text=text) if
+                               not token.tag.startswith('W') and not token.tag == 'SW']
+        text = self.morpheme_analyzer.join(remove_sw_text_list)
         return text
 
     def get_tags(self, title: str, post_text: str, return_keyword: bool = False, top_n: int = 5,
