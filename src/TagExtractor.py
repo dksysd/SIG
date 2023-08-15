@@ -153,7 +153,7 @@ class TagExtractor:
             for default_tag in self.tag_set:
                 similarity = self.similarity_comparator.get_similarity(word1=default_tag,
                                                                        word2=noun_keyword_list[index][0])
-                if (max_similarity < similarity) and (default_tag not in result_tag_list):
+                if max_similarity < similarity:
                     max_similarity = similarity
                     max_similarity_default_tag = default_tag
 
