@@ -10,5 +10,9 @@ class NamedEntityRecognizer:
         if len(text) < self.max_text_length:
             return self.model(text)
         else:
-            last_space_index = text[0:self.max_text_length].rfind(' ')
-            return self.analyze(text=text[0:last_space_index]) + self.analyze(text=text[last_space_index:])
+            last_index = text[0:self.max_text_length].rfind(' ')
+            if last_index == 0:
+                last_index = text[0:self.max_text_length].rfind('\n')
+                if last_index == 0:
+                    last_index = self.max_text_length
+            return self.analyze(text=text[0:last_index]) + self.analyze(text=text[last_index:])
