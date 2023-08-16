@@ -166,7 +166,6 @@ class SETagExtractor:
         for tag in tag_set:
             morpheme_analyzer.add_user_word(word=tag)
         self.tag_extractor = TagExtractor(tag_set=tag_set, morpheme_analyzer=morpheme_analyzer)
-        self.similarity_point = 0.7
 
     def get_tags(self, post_id: int) -> list[str]:
         """
@@ -175,8 +174,7 @@ class SETagExtractor:
         :return: 게시글에 달린 태그
         """
         title, post_text, author = self.database_controller.get_data(post_id=post_id)
-        tag_list, keyword_list = self.tag_extractor.get_tags(title=title, post_text=post_text, return_keyword=True,
-                                                             similarity_point=self.similarity_point)
+        tag_list, keyword_list = self.tag_extractor.get_tags(title=title, post_text=post_text, return_keyword=True)
         self.database_controller.save_keywords(post_id=post_id, keyword_list=keyword_list)
         self.database_controller.save_tags(post_id=post_id, tag_list=tag_list)
         return tag_list
@@ -198,3 +196,12 @@ class SETagExtractor:
                 self.database_controller.save_tag(post_id=post_id, tag=tag)
 
         self.tag_extractor._get_tags()
+
+    def tag_all(self, reset_keyword_post_table: bool = False, reset_tag_post_table: bool = False):
+        if reset_keyword_post_table:
+            self.database_controller._execute('DELETE FROM keyword_post')
+        if reset_tag_post_table:
+            self.database_controller._execute('DELETE FROM tag_post')
+        for inner in self.database_controller._execute('SELECT id FROM post'):
+            id = inner[0]
+            self.get_tags(post_id=id)
