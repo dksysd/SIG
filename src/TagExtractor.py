@@ -49,8 +49,8 @@ class TagExtractor:
         return text
 
     def get_tags(self, title: str, post_text: str, return_keyword: bool = False, top_n: int = 5,
-                 score_point: float = 0.5,
-                 similarity_point: float = 0.7) -> tuple[list[str], list[tuple[str, float]]] | list[str]:
+                 score_point: float = 0.3,
+                 similarity_point: float = 0.75) -> tuple[list[str], list[tuple[str, float]]] | list[str]:
         """
         해당 게시글에 대해 태그 반환
         :param title:제목
@@ -90,17 +90,17 @@ class TagExtractor:
 
         # 최종 태그 추출
         title_max_n = int(top_n / 2)
-        result_tag_list = []
+        result_tag_set = set()
         self._get_tags(noun_keyword_list=title_noun_keyword_list, max_n=title_max_n,
-                       similarity_point=similarity_point, result_tag_list=result_tag_list)
-        post_text_max_n = top_n - len(result_tag_list)
+                       similarity_point=similarity_point, result_tag_set=result_tag_set)
+        post_text_max_n = top_n - len(result_tag_set)
         self._get_tags(noun_keyword_list=post_text_noun_keyword_list, max_n=post_text_max_n,
-                       similarity_point=similarity_point, result_tag_list=result_tag_list)
+                       similarity_point=similarity_point, result_tag_set=result_tag_set)
 
         if return_keyword:
-            return result_tag_list, title_noun_keyword_list + post_text_noun_keyword_list
+            return list(result_tag_set), title_noun_keyword_list + post_text_noun_keyword_list
         else:
-            return result_tag_list
+            return list(result_tag_set)
 
     def _keyword_to_noun(self, keyword_list: KeywordList) -> dict:
         """
@@ -136,14 +136,13 @@ class TagExtractor:
         return result_noun_keyword_list
 
     def _get_tags(self, noun_keyword_list: list[tuple[str, float]], max_n: int, similarity_point: float,
-                  result_tag_list: list[str]):
+                  result_tag_set: set):
         """
         전처리된 결과값에 대한 태그 추출 (최종 태그 추출)
         :param noun_keyword_list:
         :param max_n:
         :param similarity_point:
-        :param result_tag_list:
-        :return:
+        :param result_tag_set:
         """
         index = 0
         count = 0
@@ -158,7 +157,6 @@ class TagExtractor:
                     max_similarity_default_tag = default_tag
 
             if max_similarity_default_tag is not None:
-                result_tag_list.append(max_similarity_default_tag)
+                result_tag_set.add(max_similarity_default_tag)
                 count += 1
             index += 1
-        return result_tag_list
