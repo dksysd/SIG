@@ -49,6 +49,7 @@ class TagExtractor:
         return text
 
     def get_tags(self, title: str, post_text: str, return_keyword: bool = False, top_n: int = 5,
+                 keyword_ngram_range: tuple[int, int] = (1, 3),
                  score_point: float = 0.3,
                  similarity_point: float = 0.75) -> tuple[list[str], list[tuple[str, float]]] | list[str]:
         """
@@ -70,8 +71,10 @@ class TagExtractor:
         pretreatment_post_text = ' '.join(pretreatment_post_text_sentence_list)
 
         # 키워드 추출
-        title_KeywordList = self.keyword_extractor.get_keywords(text=pretreatment_title)
-        post_text_KeywordList = self.keyword_extractor.get_keywords(text=pretreatment_post_text)
+        title_KeywordList = self.keyword_extractor.get_keywords(text=pretreatment_title,
+                                                                ngram_range=keyword_ngram_range)
+        post_text_KeywordList = self.keyword_extractor.get_keywords(text=pretreatment_post_text,
+                                                                    ngram_range=keyword_ngram_range)
 
         # 키워드 단어 명사화 및 동일 명사 가중치 합 연산
         title_noun_keyword_dict = self._keyword_to_noun(keyword_list=title_KeywordList)

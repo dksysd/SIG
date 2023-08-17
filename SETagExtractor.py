@@ -1,6 +1,7 @@
 from typing import Any, Union
 
 from mysql.connector import pooling
+from tqdm.auto import tqdm
 
 from src.MorphemeAnalyzer import MorphemeAnalyzer
 from src.TagExtractor import TagExtractor
@@ -202,6 +203,7 @@ class SETagExtractor:
             self.database_controller._execute('DELETE FROM keyword_post')
         if reset_tag_post_table:
             self.database_controller._execute('DELETE FROM tag_post')
-        for inner in self.database_controller._execute('SELECT id FROM post'):
+        for inner in tqdm(self.database_controller._execute('SELECT id FROM post'), ascii=True, dynamic_ncols=True,
+                          desc='tagging'):
             id = inner[0]
             self.get_tags(post_id=id)

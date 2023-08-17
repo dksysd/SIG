@@ -94,14 +94,15 @@ class KeywordExtractor:
         bert_model = BertModel.from_pretrained(bert_model_name)
         self.keyword_model = KeyBERT(bert_model)
 
-    def get_keywords(self, text: str, top_n: int = 10) -> KeywordList:
+    def get_keywords(self, text: str, top_n: int = 10, ngram_range: tuple[int, int] = (1, 3)) -> KeywordList:
         """
         문장에서 키워드 추출
         :param text:분석할 문장
         :param top_n:가중치가 높은 순서대로 n개 추출
+        :param ngram_range:키워드 ngram 값 범위 
         :return: 단어와 가중치가 포함된 배열
         """
         result_keyword_list = KeywordList()
-        for keyword, score in self.keyword_model.extract_keywords(text, top_n=top_n, keyphrase_ngram_range=(1, 3)):
+        for keyword, score in self.keyword_model.extract_keywords(text, top_n=top_n, keyphrase_ngram_range=ngram_range):
             result_keyword_list.add_keyword(keyword=keyword, score=score)
         return result_keyword_list
